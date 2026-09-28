@@ -40,6 +40,24 @@
   font-size: 1.1rem;
 }
 
+.business-lesson {
+  border-color: #8bcbbc;
+  background: #f1fbf8;
+}
+
+.business-lesson .grade-name {
+  color: #087b67;
+}
+
+.business-lesson .grade-main::before {
+  content: "BUSINESS";
+  grid-column: 1 / 3;
+  color: var(--ink-soft);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
 /* Keep the primary action in one fixed tap position before and after reveal. */
 .study-actions {
   grid-template-rows: 61px 61px;

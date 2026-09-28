@@ -22,10 +22,140 @@ const wordSets = {
   ]
 };
 
-const words = Object.entries(wordSets).flatMap(([grade, rows]) => rows.map(([word, reading, meaning], index) => ({
+const businessWordSets = {
+  '起業・会社設立': [
+    ['起業', 'きぎょう', 'Business startup / Entrepreneurship'],
+    ['創業', 'そうぎょう', 'Founding a business'],
+    ['会社設立', 'かいしゃせつりつ', 'Company incorporation'],
+    ['法人', 'ほうじん', 'Legal entity / Corporation'],
+    ['法人化', 'ほうじんか', 'Incorporation'],
+    ['株式会社', 'かぶしきがいしゃ', 'Joint-stock company (KK)'],
+    ['合同会社', 'ごうどうがいしゃ', 'Limited liability company (GK)'],
+    ['個人事業主', 'こじんじぎょうぬし', 'Sole proprietor'],
+    ['商号', 'しょうごう', 'Company / trade name'],
+    ['本店所在地', 'ほんてんしょざいち', 'Registered head-office address'],
+    ['事業目的', 'じぎょうもくてき', 'Business purposes'],
+    ['定款', 'ていかん', 'Articles of incorporation'],
+    ['定款認証', 'ていかんにんしょう', 'Notarization of articles'],
+    ['公証役場', 'こうしょうやくば', 'Notary office'],
+    ['登記', 'とうき', 'Registration'],
+    ['法人登記', 'ほうじんとうき', 'Corporate registration'],
+    ['登記事項証明書', 'とうきじこうしょうめいしょ', 'Certificate of registered matters'],
+    ['法人番号', 'ほうじんばんごう', 'Corporate number'],
+    ['発起人', 'ほっきにん', 'Incorporator / Promoter'],
+    ['設立日', 'せつりつび', 'Date of incorporation']
+  ],
+  '資本金・株式・経営': [
+    ['資本金', 'しほんきん', 'Capital'],
+    ['出資', 'しゅっし', 'Capital contribution / Investment'],
+    ['出資者', 'しゅっししゃ', 'Investor / Contributor'],
+    ['株主', 'かぶぬし', 'Shareholder'],
+    ['株式', 'かぶしき', 'Shares / Stock'],
+    ['持株比率', 'もちかぶひりつ', 'Shareholding ratio'],
+    ['代表取締役', 'だいひょうとりしまりやく', 'Representative director'],
+    ['取締役', 'とりしまりやく', 'Director'],
+    ['役員', 'やくいん', 'Corporate officer'],
+    ['役員報酬', 'やくいんほうしゅう', 'Director / officer remuneration'],
+    ['事業計画', 'じぎょうけいかく', 'Business plan'],
+    ['事業計画書', 'じぎょうけいかくしょ', 'Business plan document'],
+    ['経営', 'けいえい', 'Business management'],
+    ['経営者', 'けいえいしゃ', 'Business owner / Manager'],
+    ['共同経営者', 'きょうどうけいえいしゃ', 'Co-founder / Business partner']
+  ],
+  '在留資格・ビザ': [
+    ['在留資格', 'ざいりゅうしかく', 'Status of residence'],
+    ['経営・管理', 'けいえい・かんり', 'Business Manager status of residence'],
+    ['在留カード', 'ざいりゅうカード', 'Residence card'],
+    ['在留期間', 'ざいりゅうきかん', 'Period of stay'],
+    ['在留期間更新', 'ざいりゅうきかんこうしん', 'Extension of period of stay'],
+    ['在留資格変更', 'ざいりゅうしかくへんこう', 'Change of status of residence'],
+    ['出入国在留管理庁', 'しゅつにゅうこくざいりゅうかんりちょう', 'Immigration Services Agency'],
+    ['地方出入国在留管理局', 'ちほうしゅつにゅうこくざいりゅうかんりきょく', 'Regional Immigration Services Bureau'],
+    ['資格外活動許可', 'しかくがいかつどうきょか', "Permission to engage in activities outside one's status"],
+    ['永住者', 'えいじゅうしゃ', 'Permanent resident']
+  ],
+  '事務所・許認可': [
+    ['事業所', 'じぎょうしょ', 'Place of business'],
+    ['事務所', 'じむしょ', 'Office'],
+    ['賃貸借契約', 'ちんたいしゃくけいやく', 'Lease agreement'],
+    ['賃貸物件', 'ちんたいぶっけん', 'Rental property'],
+    ['保証金', 'ほしょうきん', 'Security deposit'],
+    ['許認可', 'きょにんか', 'Licenses and permits'],
+    ['営業許可', 'えいぎょうきょか', 'Business / operating license'],
+    ['届出', 'とどけで', 'Notification / Filing'],
+    ['申請', 'しんせい', 'Application'],
+    ['申請書', 'しんせいしょ', 'Application form']
+  ],
+  '銀行・資金調達': [
+    ['法人口座', 'ほうじんこうざ', 'Corporate bank account'],
+    ['口座開設', 'こうざかいせつ', 'Opening a bank account'],
+    ['振込', 'ふりこみ', 'Bank transfer'],
+    ['融資', 'ゆうし', 'Loan / Financing'],
+    ['資金調達', 'しきんちょうたつ', 'Fundraising / Financing'],
+    ['借入金', 'かりいれきん', 'Borrowings / Loan payable'],
+    ['自己資金', 'じこしきん', 'Own funds / Personal capital'],
+    ['投資家', 'とうしか', 'Investor'],
+    ['補助金', 'ほじょきん', 'Subsidy'],
+    ['助成金', 'じょせいきん', 'Grant / Financial assistance']
+  ],
+  '税金・会計': [
+    ['税務署', 'ぜいむしょ', 'Tax office'],
+    ['法人税', 'ほうじんぜい', 'Corporate tax'],
+    ['所得税', 'しょとくぜい', 'Income tax'],
+    ['消費税', 'しょうひぜい', 'Consumption tax'],
+    ['住民税', 'じゅうみんぜい', 'Resident tax'],
+    ['源泉徴収', 'げんせんちょうしゅう', 'Withholding tax'],
+    ['確定申告', 'かくていしんこく', 'Final tax return'],
+    ['決算', 'けっさん', 'Closing of accounts / Financial results'],
+    ['決算書', 'けっさんしょ', 'Financial statements'],
+    ['会計', 'かいけい', 'Accounting'],
+    ['経理', 'けいり', 'Bookkeeping / Accounting administration'],
+    ['売上', 'うりあげ', 'Sales / Revenue'],
+    ['利益', 'りえき', 'Profit'],
+    ['経費', 'けいひ', 'Business expenses'],
+    ['請求書', 'せいきゅうしょ', 'Invoice']
+  ],
+  'インボイス・取引・契約': [
+    ['適格請求書', 'てきかくせいきゅうしょ', 'Qualified invoice'],
+    ['インボイス制度', 'インボイスせいど', 'Qualified invoice system'],
+    ['適格請求書発行事業者', 'てきかくせいきゅうしょはっこうじぎょうしゃ', 'Qualified invoice issuer'],
+    ['契約', 'けいやく', 'Contract / Agreement'],
+    ['契約書', 'けいやくしょ', 'Written contract'],
+    ['取引先', 'とりひきさき', 'Business partner / Client'],
+    ['見積書', 'みつもりしょ', 'Quotation / Estimate'],
+    ['領収書', 'りょうしゅうしょ', 'Receipt'],
+    ['納品書', 'のうひんしょ', 'Delivery note'],
+    ['支払期限', 'しはらいきげん', 'Payment deadline / Due date']
+  ],
+  '雇用・社会保険': [
+    ['雇用', 'こよう', 'Employment'],
+    ['従業員', 'じゅうぎょういん', 'Employee'],
+    ['雇用契約書', 'こようけいやくしょ', 'Employment contract'],
+    ['給与', 'きゅうよ', 'Salary / Payroll'],
+    ['最低賃金', 'さいていちんぎん', 'Minimum wage'],
+    ['社会保険', 'しゃかいほけん', 'Social insurance'],
+    ['健康保険', 'けんこうほけん', 'Health insurance'],
+    ['厚生年金', 'こうせいねんきん', "Employees' pension insurance"],
+    ['労働保険', 'ろうどうほけん', 'Labor insurance'],
+    ['労働基準法', 'ろうどうきじゅんほう', 'Labor Standards Act']
+  ]
+};
+
+const gradeWords = Object.entries(wordSets).flatMap(([grade, rows]) => rows.map(([word, reading, meaning], index) => ({
   id: `g${grade}-${index + 1}`,
-  grade: Number(grade),
+  lesson: Number(grade),
   word,
   reading,
   meaning
 })));
+
+const businessWords = Object.entries(businessWordSets).flatMap(([category, rows]) => rows.map(([word, reading, meaning]) => ({
+  id: `business-${word}`,
+  lesson: 'business',
+  category,
+  word,
+  reading,
+  meaning
+})));
+
+const words = [...gradeWords, ...businessWords];
