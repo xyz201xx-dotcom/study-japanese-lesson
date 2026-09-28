@@ -2,11 +2,12 @@ const GRADE_LABELS = { 3: '小学3年生', 4: '小学4年生', 5: '小学5年生
 const STORAGE_KEY = 'japanese-compound-trainer-v1';
 const XP_PER_LEVEL = 100;
 
-const initialState = { mastered: {}, seen: {}, xp: 0 };
+const initialState = { mastered: {}, seen: {}, missed: {}, xp: 0 };
 let state = loadState();
 let currentGrade = null;
 let currentWord = null;
 let isAnswerVisible = false;
+let studyMode = 'learn';
 
 function loadState() {
   try {
@@ -20,7 +21,8 @@ function gradeWords(grade) { return words.filter((item) => item.grade === grade)
 function gradeStats(grade) {
   const items = gradeWords(grade);
   const mastered = items.filter((item) => state.mastered[item.id]).length;
-  return { total: items.length, mastered, percent: Math.round((mastered / items.length) * 100) };
+  const missed = items.filter((item) => state.missed[item.id]).length;
+  return { total: items.length, mastered, missed, percent: Math.round((mastered / items.length) * 100) };
 }
 function progressBar(percent) { return `<div class="progress-track" aria-label="${percent}% 完了"><span style="width:${percent}%"></span></div>`; }
 function escapeHtml(value) { return value.replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]); }
@@ -41,21 +43,23 @@ function renderHome() {
       <section class="grade-section"><div class="section-heading"><h2>学年をえらぶ</h2><p>できるところから始めよう</p></div><div class="grade-list">
         ${Object.keys(GRADE_LABELS).map((grade) => {
           const stats = gradeStats(Number(grade));
-          return `<button class="grade-card" data-grade="${grade}"><span class="grade-name">${GRADE_LABELS[grade]}</span><span class="grade-progress">${stats.mastered === 0 ? '未開始' : `${stats.mastered} / ${stats.total} マスター`}</span>${progressBar(stats.percent)}<span class="percent">${stats.percent}%</span><span class="chevron" aria-hidden="true">›</span></button>`;
+          return `<article class="grade-card"><button class="grade-main" data-grade="${grade}"><span class="grade-name">${GRADE_LABELS[grade]}</span><span class="grade-progress">${stats.mastered === 0 ? '未開始' : `${stats.mastered} / ${stats.total} マスター`}</span>${progressBar(stats.percent)}<span class="percent">${stats.percent}%</span><span class="chevron" aria-hidden="true">›</span></button>${stats.missed ? `<button class="review-chip" data-review="${grade}"><span aria-hidden="true">↻</span> 復習 ${stats.missed}語</button>` : ''}</article>`;
         }).join('')}
       </div></section>
       <p class="home-note">「分かった」を選ぶと +10 XP。進捗はこの端末に保存されます。</p>
     </div>`;
   app.querySelectorAll('[data-grade]').forEach((button) => button.addEventListener('click', () => startGrade(Number(button.dataset.grade))));
+  app.querySelectorAll('[data-review]').forEach((button) => button.addEventListener('click', () => startGrade(Number(button.dataset.review), 'missed')));
 }
 
-function startGrade(grade) {
+function startGrade(grade, mode = 'learn') {
   currentGrade = grade;
+  studyMode = mode;
   pickNextWord();
   renderStudy();
 }
 function pickNextWord() {
-  const pool = gradeWords(currentGrade).filter((item) => !state.mastered[item.id]);
+  const pool = gradeWords(currentGrade).filter((item) => studyMode === 'missed' ? state.missed[item.id] : !state.mastered[item.id]);
   if (!pool.length) { currentWord = null; return; }
   const alternatives = pool.filter((item) => item.id !== currentWord?.id);
   currentWord = (alternatives.length ? alternatives : pool)[Math.floor(Math.random() * (alternatives.length ? alternatives.length : pool.length))];
@@ -63,12 +67,12 @@ function pickNextWord() {
 }
 function renderStudy() {
   const stats = gradeStats(currentGrade);
-  if (!currentWord) return renderComplete(stats);
+  if (!currentWord) return studyMode === 'missed' ? renderReviewComplete() : renderComplete(stats);
   document.title = `${currentWord.word} | 日本語 熟語トレーニング`;
-  const remaining = stats.total - stats.mastered;
+  const remaining = studyMode === 'missed' ? stats.missed : stats.total - stats.mastered;
   app.innerHTML = `
     <div class="app-shell study-shell">
-      <header class="study-header"><button class="icon-button" id="home-button" aria-label="ホームへ戻る">‹</button><div><p class="eyebrow">${GRADE_LABELS[currentGrade]}</p><strong>${stats.mastered} / ${stats.total}</strong></div><button class="text-button" id="review-button">見直す</button></header>
+      <header class="study-header"><button class="icon-button" id="home-button" aria-label="ホームへ戻る">‹</button><div><p class="eyebrow">${studyMode === 'missed' ? '間違えた問題を復習' : GRADE_LABELS[currentGrade]}</p><strong>${studyMode === 'missed' ? `${GRADE_LABELS[currentGrade]}・残り ${stats.missed}語` : `${stats.mastered} / ${stats.total}`}</strong></div><button class="text-button" id="review-button">習得済み</button></header>
       ${progressBar(stats.percent)}
       <section class="study-card ${isAnswerVisible ? 'revealed' : ''}">
         <p class="card-kicker">${isAnswerVisible ? '答え' : '熟語'}</p>
@@ -76,7 +80,7 @@ function renderStudy() {
         ${isAnswerVisible ? `<div class="answer"><p class="reading">${escapeHtml(currentWord.reading)}</p><div class="meaning"><p>意味</p><strong>${escapeHtml(currentWord.meaning)}</strong></div></div>` : `<p class="hint">思い出せたら答えを見てみよう</p>`}
       </section>
       <div class="study-actions">${isAnswerVisible ? `<button class="know-button" id="know-button"><span>✓</span> 分かった <small>+10 XP</small></button><button class="unknown-button" id="unknown-button">分からなかった</button>` : `<button class="reveal-button" id="reveal-button">答えを見る <span>→</span></button>`}</div>
-      <p class="remaining">あと <strong>${remaining}</strong> 語！</p>
+      <p class="remaining">${studyMode === 'missed' ? '復習は' : 'あと'} <strong>${remaining}</strong> 語${studyMode === 'missed' ? 'です' : '！'}</p>
     </div>`;
   document.querySelector('#home-button').addEventListener('click', renderHome);
   document.querySelector('#review-button').addEventListener('click', () => renderReview());
@@ -89,10 +93,14 @@ function judge(mastered) {
   state.seen[currentWord.id] = true;
   if (mastered) {
     const previousLevel = level();
+    const wasMastered = Boolean(state.mastered[currentWord.id]);
     state.mastered[currentWord.id] = true;
-    state.xp += 10;
+    delete state.missed[currentWord.id];
+    if (!wasMastered) state.xp += 10;
     saveState();
     if (level() > previousLevel) return showLevelUp();
+  } else {
+    state.missed[currentWord.id] = true;
   }
   saveState();
   pickNextWord();
@@ -103,6 +111,12 @@ function renderComplete(stats) {
   document.querySelector('#home-button').addEventListener('click', renderHome);
   document.querySelector('#home-link').addEventListener('click', renderHome);
   document.querySelector('#review-button').addEventListener('click', renderReview);
+}
+function renderReviewComplete() {
+  app.innerHTML = `<div class="app-shell study-shell"><header class="study-header"><button class="icon-button" id="home-button" aria-label="ホームへ戻る">‹</button><div><p class="eyebrow">${GRADE_LABELS[currentGrade]}</p><strong>復習</strong></div><span></span></header><section class="complete"><div class="complete-badge">✓</div><p class="eyebrow">REVIEW COMPLETE</p><h1>復習できました！</h1><p>間違えた熟語をすべて覚えました。</p><button class="reveal-button" id="learn-button">通常学習をつづける</button><button class="plain-button" id="home-link">ホームへ戻る</button></section></div>`;
+  document.querySelector('#home-button').addEventListener('click', renderHome);
+  document.querySelector('#home-link').addEventListener('click', renderHome);
+  document.querySelector('#learn-button').addEventListener('click', () => startGrade(currentGrade));
 }
 function renderReview() {
   const mastered = gradeWords(currentGrade).filter((item) => state.mastered[item.id]);
