@@ -75,7 +75,7 @@ function renderStudy() {
         <h1>${escapeHtml(currentWord.word)}</h1>
         ${isAnswerVisible ? `<div class="answer"><p class="reading">${escapeHtml(currentWord.reading)}</p><div class="meaning"><p>意味</p><strong>${escapeHtml(currentWord.meaning)}</strong></div></div>` : `<p class="hint">思い出せたら答えを見てみよう</p>`}
       </section>
-      <div class="study-actions">${isAnswerVisible ? `<button class="know-button" id="know-button"><span>✓</span> 分かった <small>+10 XP</small></button><button class="unknown-button" id="unknown-button">まだ分からない</button>` : `<button class="reveal-button" id="reveal-button">答えを見る <span>→</span></button>`}</div>
+      <div class="study-actions">${isAnswerVisible ? `<button class="know-button" id="know-button"><span>✓</span> 分かった <small>+10 XP</small></button><button class="unknown-button" id="unknown-button">分からなかった</button>` : `<button class="reveal-button" id="reveal-button">答えを見る <span>→</span></button>`}</div>
       <p class="remaining">あと <strong>${remaining}</strong> 語！</p>
     </div>`;
   document.querySelector('#home-button').addEventListener('click', renderHome);
