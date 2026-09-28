@@ -39,3 +39,25 @@
   margin-right: 5px;
   font-size: 1.1rem;
 }
+
+/* Keep the primary action in one fixed tap position before and after reveal. */
+.study-actions {
+  grid-template-rows: 61px 61px;
+  min-height: 132px;
+}
+
+.action-placeholder {
+  min-height: 61px;
+  visibility: hidden;
+}
+
+@media (max-width: 420px) {
+  .study-actions {
+    grid-template-rows: 58px 58px;
+    min-height: 126px;
+  }
+
+  .action-placeholder {
+    min-height: 58px;
+  }
+}
